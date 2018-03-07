@@ -74,11 +74,11 @@ int main(int argc, char * argv[]){
   printf("\n");
   fflush(stdout);
 
-  pthread_create(&sort1_tid, &attr, sort, left);
-  pthread_create(&sort2_tid, &attr, sort, right);
+  pthread_create(&sort1_tid, NULL, sort, left);
+  pthread_create(&sort2_tid, NULL, sort, right);
   pthread_join(sort1_tid, NULL);
   pthread_join(sort2_tid, NULL);
-  pthread_create(&merge_tid, &attr, merge, right);
+  pthread_create(&merge_tid, NULL, merge, right);
   pthread_join(merge_tid, NULL);
 
   printf("FINAL ARRAY: ");
