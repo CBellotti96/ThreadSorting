@@ -1,104 +1,99 @@
-#include <pthread.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include <time.h>
 
-#define ARRAY_SIZE 30
+#define SIZE 20
 
-int values[ARRAY_SIZE];
+int global_arr[SIZE];
 
-void  *sort(void *argument) {
-  int *endpoints = (int *)argument;
-  int beg = endpoints[0];
-  int end = endpoints[1];
+void *select_sort(void *params) { //passing in start and end bounds of current thread's subarray
+  int *bounds = (int *)params;
+  int start = bounds[0];
+  int end = bounds[1];
   int min_index;
-  printf("subarray: ");
-  for (int i = beg; i < end+1; i++) {
-    printf("%d ", values[i]);
+  printf("subarray for thread %d: ", (start%(start-1)));
+  for (int i = start; i < end+1; i++) {
+    printf("%d ", global_arr[i]);
   }
   printf("\n");
   fflush(stdout);
-  for (int i = beg; i < end; i++) {
+  for (int i = start; i < end; i++) { //performing selection sort on subarray
     min_index = i;
     for (int j = i+1; j < end + 1; j++) {
-      if (values[j] < values[min_index]) {
+      if (global_arr[j] < global_arr[min_index]) {
         min_index = j;
       }
     }
-    int tmp = values[min_index];
-    values[min_index] = values[i];
-    values[i] = tmp;
+    int tmp = global_arr[min_index];
+    global_arr[min_index] = global_arr[i];
+    global_arr[i] = tmp;
   }
-  printf("sorted subarray: ");
-  for (int i = beg; i < end + 1; i++) {
-    printf("%d ", values[i]);
+  printf("sorted subarray for thread %d: ", (start%(start-1)));
+  for (int i = start; i < end + 1; i++) {
+    printf("%d ", global_arr[i]);
   }
   printf("\n");
-  pthread_exit(NULL);
+  pthread_exit(NULL); //halts execution of thread, return to main function and end pthread_join()
 }
-void *merge(void *part){
-  int *p = (int *)part;
-  int partition = p[0];
-  printf("%d \n", partition);
+void *merge(void *param){ //passing in bounds of the subarray which contains the partition value as it's start, we will only use this value
+  int *sub_size = (int *)param;
+  int partition = sub_size[0]; //copy partition value from param[]
   int left_array = 0;
-  int right_array = partition; //15
-  int solution[ARRAY_SIZE];
-  int counter = 0;
-  while (left_array < partition && right_array < ARRAY_SIZE){
-    if (values[left_array] < values[right_array]){
-      solution[counter++] = values[left_array++];
+  int right_array = partition;
+  int merge_subs[SIZE];
+  int index = 0; //signifies the current index of the fully merged array
+  while (left_array < partition && right_array < SIZE){ //walk through each list, compare values and place in merge array
+    if (global_arr[left_array] < global_arr[right_array]){
+      merge_subs[index++] = global_arr[left_array++];
     }
     else{
-      solution[counter++] = values[right_array++];
+      merge_subs[index++] = global_arr[right_array++];
     }
   }
+  //once one list is empty, walk through the rest of the other list and place the values in merge array
   while (left_array < partition){
-    solution[counter++] = values[left_array++];
+    merge_subs[index++] = global_arr[left_array++];
   }
-  while (right_array < ARRAY_SIZE){
-    solution[counter++] = values[right_array++];
+  while (right_array < SIZE){
+    merge_subs[index++] = global_arr[right_array++];
   }
-  for (int i = 0; i < ARRAY_SIZE; i++) {
-    values[i] = solution[i];
+  for (int i = 0; i < SIZE; i++) {
+    global_arr[i] = merge_subs[i];
   }
   pthread_exit(NULL);
 }
 int main(int argc, char * argv[]){
 
-  int partition = ARRAY_SIZE/2;
-
-  //random number generator into the global values array
+  //randomly generating numbers between 0 & 500 for global array
   srand(time(NULL));
-  for (int i = 0; i < ARRAY_SIZE; i++) {
-     values[i] = (rand()%100) + 1; //values generated between 1 and 100
+  for (int i = 0; i < SIZE; i++) {
+     global_arr[i] = (rand()%500) + 1; //values generated between 1 and 100
   }
 
-  pid_t pid;
-  pthread_t sort1_tid, sort2_tid, merge_tid;
-  pthread_attr_t attr;
-  pthread_attr_init(&attr);
+  pthread_t thr[3];
 
-  int left[2] = {0, partition-1};
-  int right[2] = {partition, ARRAY_SIZE-1};
+  int partition = SIZE/2;
+  int left_array[2] = {0, partition-1};
+  int right_array[2] = {partition, SIZE-1};
 
-  printf("ORIGINAL ARRAY: ");
-  for (int i = 0; i < ARRAY_SIZE; i++) {
-    printf("%d ", values[i]);
+  printf("Printing randomized, unsorted array: ");
+  for (int i = 0; i < SIZE; i++) {
+    printf("%d ", global_arr[i]);
   }
   printf("\n");
   fflush(stdout);
 
-  pthread_create(&sort1_tid, NULL, sort, left);
-  pthread_create(&sort2_tid, NULL, sort, right);
-  pthread_join(sort1_tid, NULL);
-  pthread_join(sort2_tid, NULL);
-  pthread_create(&merge_tid, NULL, merge, right);
-  pthread_join(merge_tid, NULL);
+  pthread_create(&thr[0], NULL, select_sort, left_array);
+  pthread_create(&thr[1], NULL, select_sort, right_array);
+  pthread_join(thr[0], NULL);
+  pthread_join(thr[1], NULL);
+  pthread_create(&thr[2], NULL, merge, right_array);
+  pthread_join(thr[2], NULL);
 
-  printf("FINAL ARRAY: ");
-  for (int i = 0; i < ARRAY_SIZE; i++) {
-    printf("%d, ", values[i]);
+  printf("Printing final sorted array: ");
+  for (int i = 0; i < SIZE; i++) {
+    printf("%d, ", global_arr[i]);
   }
   printf("\n");
   fflush(stdout);
