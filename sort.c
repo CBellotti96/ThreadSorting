@@ -8,41 +8,56 @@
 
 int values[ARRAY_SIZE];
 
-void sort(void *argument) {
+void  *sort(void *argument) {
   int *endpoints = (int *)argument;
   int beg = endpoints[0];
   int end = endpoints[1];
-  for (int i = 0; i < end+1; i++) { //bubblesort
-    for (int j = 0; j < end-i; j++) {
-      if (values[beg+j]>values[beg+j+1]) {
-        int tmp = values[beg+j];
-        values[beg+j] = values[beg+j+1];
-        values[beg+j+1] = tmp;
+  int min_index;
+  printf("subarray: ");
+  for (int i = beg; i < end+1; i++) {
+    printf("%d ", values[i]);
+  }
+  printf("\n");
+  fflush(stdout);
+  for (int i = beg; i < end; i++) {
+    min_index = i;
+    for (int j = i+1; j < end + 1; j++) {
+      if (values[j] < values[min_index]) {
+        min_index = j;
       }
     }
+    int tmp = values[min_index];
+    values[min_index] = values[i];
+    values[i] = tmp;
   }
+  printf("sorted subarray: ");
+  for (int i = beg; i < end + 1; i++) {
+    printf("%d ", values[i]);
+  }
+  printf("\n");
   pthread_exit(NULL);
 }
 void *merge(void *part){
   int *p = (int *)part;
   int partition = p[0];
-  int right = 0;
-  int left = partition; //15
-  int counter = 0;
+  printf("%d \n", partition);
+  int left_array = 0;
+  int right_array = partition; //15
   int solution[ARRAY_SIZE];
-  while (counter < ARRAY_SIZE-1){
-    if (values[right] < values[left]){
-      solution[counter++] = values[right++];
+  int counter = 0;
+  while (left_array < partition && right_array < ARRAY_SIZE){
+    if (values[left_array] < values[right_array]){
+      solution[counter++] = values[left_array++];
     }
     else{
-      solution[counter++] = values[left++];
+      solution[counter++] = values[right_array++];
     }
   }
-  if (left < ARRAY_SIZE){
-    solution[ARRAY_SIZE-1] = values[ARRAY_SIZE-1];
+  while (left_array < partition){
+    solution[counter++] = values[left_array++];
   }
-  else {
-    solution[ARRAY_SIZE-1] = values[partition+1];
+  while (right_array < ARRAY_SIZE){
+    solution[counter++] = values[right_array++];
   }
   for (int i = 0; i < ARRAY_SIZE; i++) {
     values[i] = solution[i];
@@ -69,7 +84,7 @@ int main(int argc, char * argv[]){
 
   printf("ORIGINAL ARRAY: ");
   for (int i = 0; i < ARRAY_SIZE; i++) {
-    printf("%d, ", values[i]);
+    printf("%d ", values[i]);
   }
   printf("\n");
   fflush(stdout);
@@ -88,5 +103,5 @@ int main(int argc, char * argv[]){
   printf("\n");
   fflush(stdout);
 
-  return 1;
+  return 0;
 }
