@@ -1,16 +1,13 @@
 #include <pthread.h>
-#include <stdio.h>
-#include <iostream>
-#include <cstdlib>
-#include <ctime>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define ARRAY_SIZE 30
 
-using namespace std;
-
 int values[ARRAY_SIZE];
 
-void *sort(void *argument) {
+void sort(void *argument) {
   int *endpoints = (int *)argument;
   int beg = endpoints[0];
   int end = endpoints[1];
@@ -27,7 +24,7 @@ void *sort(void *argument) {
 }
 void *merge(void *part){
   int *p = (int *)part;
-  int partition = p[1];
+  int partition = p[0];
   int right = 0;
   int left = partition; //15
   int counter = 0;
@@ -69,25 +66,24 @@ int main(int argc, char * argv[]){
   int left[2] = {0, partition-1};
   int right[2] = {partition, ARRAY_SIZE-1};
 
-  cout<<"ORIGINAL ARRAY:"<<endl;
+  printf("ORIGINAL ARRAY: ");
   for (int i = 0; i < ARRAY_SIZE; i++) {
-    cout << values[i] << " ";
+    printf("%d, ", values[i]);
   }
-  cout << endl;
+  fflush(stdout);
 
   pthread_create(&sort1_tid, &attr, sort, &left);
   pthread_create(&sort2_tid, &attr, sort, &right);
   pthread_join(sort1_tid, NULL);
   pthread_join(sort2_tid, NULL);
-  int i = 15;
-  //pthread_create(&merge_tid, &attr, merge, &left);
-  //pthread_join(merge_tid, NULL);
+  pthread_create(&merge_tid, &attr, merge, &right);
+  pthread_join(merge_tid, NULL);
 
-  cout<<"FINAL ARRAY:"<<endl;
+  printf("FINAL ARRAY: ");
   for (int i = 0; i < ARRAY_SIZE; i++) {
-    cout << values[i] << " ";
+    printf("%d, ", values[i]);
   }
-  cout << endl;
+  fflush(stdout);
 
   return 1;
 }
